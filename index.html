@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSS Crafting Calculator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🐝 BSS Crafting Calculator</h1>
+            <p class="subtitle">Calculate the cost of crafting items in Bee Swarm Simulator</p>
+        </header>
+
+        <div class="calculator-section">
+            <div class="calculator-card">
+                <h2>Calculate Crafting Cost</h2>
+                <div class="input-group">
+                    <label for="itemSelect">Select Item:</label>
+                    <select id="itemSelect">
+                        <option value="">-- Choose an item --</option>
+                        <option value="red extract">Red Extract</option>
+                        <option value="blue extract">Blue Extract</option>
+                        <option value="enzyme">Enzyme</option>
+                        <option value="oil">Oil</option>
+                        <option value="gumdrop">Gumdrop</option>
+                        <option value="glue">Glue</option>
+                        <option value="tropical drink">Tropical Drink</option>
+                        <option value="moon charm">Moon Charm</option>
+                        <option value="glitter">Glitter</option>
+                        <option value="star jelly">Star Jelly</option>
+                        <option value="purple potion">Purple Potion</option>
+                        <option value="soft wax">Soft Wax</option>
+                        <option value="hard wax">Hard Wax</option>
+                        <option value="swirled wax">Swirled Wax</option>
+                        <option value="caustic wax">Caustic Wax</option>
+                        <option value="field dice">Field Dice</option>
+                        <option value="smooth dice">Smooth Dice</option>
+                        <option value="loaded dice">Loaded Dice</option>
+                        <option value="super smoothie">Super Smoothie</option>
+                        <option value="turpentine">Turpentine</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label for="amountInput">Amount:</label>
+                    <input type="number" id="amountInput" min="1" value="1">
+                </div>
+
+                <div class="input-group" id="calculationOptionGroup" style="display: none;">
+                    <label for="calculationOption">Calculation Option:</label>
+                    <select id="calculationOption"></select>
+                </div>
+
+                <button id="calculateBtn" class="btn-primary">Calculate</button>
+
+                <div id="result" class="result-box"></div>
+            </div>
+        </div>
+
+        <div class="items-section">
+            <h2>All Items</h2>
+            <div class="items-grid" id="itemsGrid"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
