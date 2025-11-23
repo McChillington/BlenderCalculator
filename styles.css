@@ -379,22 +379,41 @@ header h1 {
 .materials-list {
     list-style: none;
     padding: 0;
-    margin-top: 15px;
+    margin: 0;
 }
 
-.materials-list li {
+.materials-list .materials-list {
+    margin-left: 20px;
+    margin-top: 5px;
+    border-left: 2px solid var(--border);
+    padding-left: 15px;
+}
+
+.material-item {
     padding: 12px 18px;
-    margin: 8px 0;
+    margin: 6px 0;
     background: var(--bg-card-light);
     border-radius: 10px;
     color: var(--text-primary);
     border-left: 4px solid var(--primary);
     transition: all 0.2s ease;
+    display: block;
 }
 
-.materials-list li:hover {
+.material-item.craftable {
+    background: rgba(99, 102, 241, 0.15);
+    border-left-color: var(--primary-light);
+    font-weight: 600;
+}
+
+.material-item:hover {
     background: var(--bg-card);
     transform: translateX(5px);
+}
+
+.material-name {
+    display: block;
+    text-transform: capitalize;
 }
 
 .total-cost {
