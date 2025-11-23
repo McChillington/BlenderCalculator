@@ -1,4 +1,3 @@
-// Item formulas parsed from message.txt
 const formulas = {
     'red extract': {
         materials: [
@@ -379,7 +378,6 @@ const formulas = {
     }
 };
 
-// Base item prices (set to 0, as they're calculated recursively)
 const baseItems = {
     'strawberry': 0,
     'blueberry': 0,
@@ -393,7 +391,6 @@ const baseItems = {
     'whirligig': 0
 };
 
-// Image mapping
 const imageMap = {
     'red extract': 'images/Red_Extract.webp',
     'blue extract': 'images/Blue_Extract.webp',
@@ -428,22 +425,18 @@ const imageMap = {
     'royal jelly': 'images/Royal_Jelly.webp'
 };
 
-// Cache for calculated prices
 let priceCache = {};
 
-// Fixed Royal Jelly price (10 million)
 const ROYAL_JELLY_PRICE = 10000000;
 
-// Get recursive materials breakdown
 function getMaterialsBreakdown(itemName, amount, visited = new Set()) {
     if (visited.has(itemName)) {
-        return []; // Prevent infinite recursion
+        return []; 
     }
     visited.add(itemName);
 
     const formula = formulas[itemName];
     if (!formula) {
-        // Base item - return empty (base items don't need breakdown)
         return [];
     }
 
@@ -458,7 +451,6 @@ function getMaterialsBreakdown(itemName, amount, visited = new Set()) {
             children: []
         };
 
-        // If this material is a craftable item, get its breakdown
         if (materialEntry.isItem && formulas[material.name]) {
             materialEntry.children = getMaterialsBreakdown(material.name, materialAmount, new Set(visited));
         }
@@ -469,7 +461,6 @@ function getMaterialsBreakdown(itemName, amount, visited = new Set()) {
     return breakdown;
 }
 
-// Calculate the cost of an item recursively with breakdown
 function calculateItemCost(itemName, amount, royalJellyPrice, option = null, visited = new Set(), includeBreakdown = false) {
     if (visited.has(itemName)) {
         return includeBreakdown ? { cost: 0, breakdown: [] } : 0; // Prevent infinite recursion
@@ -482,11 +473,9 @@ function calculateItemCost(itemName, amount, royalJellyPrice, option = null, vis
         return includeBreakdown ? { cost: 0, breakdown: [] } : 0;
     }
 
-    // If there's a calculation option selected, use that
     if (option && formula.options[option]) {
         const cost = evaluateOptionFormula(formula.options[option], itemName, amount, royalJellyPrice, visited);
         if (includeBreakdown) {
-            // For option calculations, show what's being calculated
             const breakdown = [{ 
                 name: option.replace('price for ', ''), 
                 amount: amount, 
@@ -498,7 +487,6 @@ function calculateItemCost(itemName, amount, royalJellyPrice, option = null, vis
         return cost;
     }
 
-    // Otherwise, calculate based on materials
     let totalCost = 0;
     const breakdown = [];
     
@@ -507,9 +495,7 @@ function calculateItemCost(itemName, amount, royalJellyPrice, option = null, vis
         let materialCost = 0;
         let materialBreakdown = [];
 
-        // Check if material is a craftable item (either marked as isItem or exists in formulas)
         if ((material.isItem || formulas[material.name]) && formulas[material.name]) {
-            // Recursive calculation for items
             const result = calculateItemCost(material.name, materialAmount, royalJellyPrice, null, new Set(visited), includeBreakdown);
             if (includeBreakdown && typeof result === 'object') {
                 materialCost = result.cost;
@@ -520,7 +506,6 @@ function calculateItemCost(itemName, amount, royalJellyPrice, option = null, vis
         } else if (material.name === 'royal jelly') {
             materialCost = royalJellyPrice * materialAmount;
         } else {
-            // Base item, no cost
             materialCost = 0;
         }
 
@@ -543,45 +528,36 @@ function calculateItemCost(itemName, amount, royalJellyPrice, option = null, vis
     return totalCost;
 }
 
-// Evaluate an option formula
 function evaluateOptionFormula(optionFormula, itemName, amount, royalJellyPrice, visited) {
     const vars = {};
     
-    // First pass: set numeric variables
     for (const [key, value] of Object.entries(optionFormula)) {
         if (key !== 'result' && typeof value === 'number') {
             vars[key] = value;
         }
     }
     
-    // Second pass: evaluate string expressions
     for (const [key, value] of Object.entries(optionFormula)) {
         if (key !== 'result' && typeof value === 'string') {
             let expr = value;
             
-            // Replace {royal jelly price}
             expr = expr.replace(/\{royal jelly price\}/g, royalJellyPrice);
             
-            // Replace {amount}
             expr = expr.replace(/\{amount\}/g, amount);
-            
-            // Replace [item] references - these get the cost of 1 item
+
             expr = expr.replace(/\[([^\]]+)\]/g, (match, item) => {
                 return calculateItemCost(item, 1, royalJellyPrice, null, new Set(visited));
             });
-            
-            // Replace (item) references - these also get the cost of 1 item
+
             expr = expr.replace(/\(([^)]+)\)/g, (match, item) => {
                 return calculateItemCost(item, 1, royalJellyPrice, null, new Set(visited));
             });
             
-            // Replace variable references in expression (must be done after item calculations)
             for (const [varName, varValue] of Object.entries(vars)) {
                 const regex = new RegExp(`\\b${varName}\\b`, 'g');
                 expr = expr.replace(regex, varValue);
             }
             
-            // Evaluate the expression
             try {
                 vars[key] = Function('"use strict"; return (' + expr + ')')();
             } catch (e) {
@@ -591,17 +567,14 @@ function evaluateOptionFormula(optionFormula, itemName, amount, royalJellyPrice,
         }
     }
     
-    // Get the result
     const resultVar = optionFormula.result;
     if (typeof resultVar === 'string' && vars[resultVar] !== undefined) {
-        // The result is already calculated for the given amount, so return it directly
         return vars[resultVar];
     }
     
     return 0;
 }
 
-// Render materials breakdown recursively
 function renderMaterialsBreakdown(breakdown, level = 0) {
     if (!breakdown || breakdown.length === 0) return '';
     
@@ -613,7 +586,6 @@ function renderMaterialsBreakdown(breakdown, level = 0) {
         html += `<span class="material-name">${item.amount.toLocaleString()} ${item.name}</span>`;
         html += '</li>';
         
-        // Recursively render children
         if (item.children && item.children.length > 0) {
             html += renderMaterialsBreakdown(item.children, level + 1);
         }
@@ -622,7 +594,6 @@ function renderMaterialsBreakdown(breakdown, level = 0) {
     return html;
 }
 
-// Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     const itemSelect = document.getElementById('itemSelect');
     const amountInput = document.getElementById('amountInput');
@@ -630,7 +601,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultBox = document.getElementById('result');
     const itemsGrid = document.getElementById('itemsGrid');
 
-    // Display all items
     const allItems = Object.keys(formulas).concat(Object.keys(baseItems));
     allItems.forEach(itemName => {
         const imageName = imageMap[itemName];
@@ -649,7 +619,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Calculate button handler
     calculateBtn.addEventListener('click', function() {
         const itemName = itemSelect.value;
         const amount = parseInt(amountInput.value) || 1;
@@ -659,16 +628,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Clear cache
         priceCache = {};
 
-        // Calculate cost
         const totalCost = calculateItemCost(itemName, amount, ROYAL_JELLY_PRICE);
 
-        // Get recursive materials breakdown
         const materialsBreakdown = getMaterialsBreakdown(itemName, amount);
 
-        // Build materials HTML
         let materialsHtml = '';
         if (materialsBreakdown.length > 0) {
             materialsHtml = '<div class="materials-section"><h4>Required Materials:</h4>';
@@ -676,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
             materialsHtml += '</div>';
         }
 
-        // Display result
         resultBox.innerHTML = `
             <h3>💰 ${itemName.charAt(0).toUpperCase() + itemName.slice(1)}</h3>
             <div class="calculation-info">
