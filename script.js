@@ -434,6 +434,41 @@ let priceCache = {};
 // Fixed Royal Jelly price (10 million)
 const ROYAL_JELLY_PRICE = 10000000;
 
+// Get recursive materials breakdown
+function getMaterialsBreakdown(itemName, amount, visited = new Set()) {
+    if (visited.has(itemName)) {
+        return []; // Prevent infinite recursion
+    }
+    visited.add(itemName);
+
+    const formula = formulas[itemName];
+    if (!formula) {
+        // Base item - return empty (base items don't need breakdown)
+        return [];
+    }
+
+    const breakdown = [];
+    
+    for (const material of formula.materials) {
+        const materialAmount = material.amount * amount;
+        const materialEntry = {
+            name: material.name,
+            amount: materialAmount,
+            isItem: material.isItem || formulas[material.name] || false,
+            children: []
+        };
+
+        // If this material is a craftable item, get its breakdown
+        if (materialEntry.isItem && formulas[material.name]) {
+            materialEntry.children = getMaterialsBreakdown(material.name, materialAmount, new Set(visited));
+        }
+
+        breakdown.push(materialEntry);
+    }
+
+    return breakdown;
+}
+
 // Calculate the cost of an item recursively with breakdown
 function calculateItemCost(itemName, amount, royalJellyPrice, option = null, visited = new Set(), includeBreakdown = false) {
     if (visited.has(itemName)) {
@@ -566,12 +601,31 @@ function evaluateOptionFormula(optionFormula, itemName, amount, royalJellyPrice,
     return 0;
 }
 
+// Render materials breakdown recursively
+function renderMaterialsBreakdown(breakdown, level = 0) {
+    if (!breakdown || breakdown.length === 0) return '';
+    
+    let html = '<ul class="materials-list">';
+    breakdown.forEach(item => {
+        const indent = level * 30;
+        const isCraftable = item.isItem;
+        html += `<li class="material-item ${isCraftable ? 'craftable' : ''}" style="margin-left: ${indent}px;">`;
+        html += `<span class="material-name">${item.amount.toLocaleString()} ${item.name}</span>`;
+        html += '</li>';
+        
+        // Recursively render children
+        if (item.children && item.children.length > 0) {
+            html += renderMaterialsBreakdown(item.children, level + 1);
+        }
+    });
+    html += '</ul>';
+    return html;
+}
+
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
     const itemSelect = document.getElementById('itemSelect');
     const amountInput = document.getElementById('amountInput');
-    const calculationOptionSelect = document.getElementById('calculationOption');
-    const calculationOptionGroup = document.getElementById('calculationOptionGroup');
     const calculateBtn = document.getElementById('calculateBtn');
     const resultBox = document.getElementById('result');
     const itemsGrid = document.getElementById('itemsGrid');
@@ -595,28 +649,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Update calculation options when item changes
-    itemSelect.addEventListener('change', function() {
-        const selectedItem = this.value;
-        calculationOptionSelect.innerHTML = '<option value="">-- No specific option --</option>';
-        calculationOptionGroup.style.display = 'none';
-
-        if (selectedItem && formulas[selectedItem] && Object.keys(formulas[selectedItem].options).length > 0) {
-            calculationOptionGroup.style.display = 'block';
-            Object.keys(formulas[selectedItem].options).forEach(option => {
-                const optionElement = document.createElement('option');
-                optionElement.value = option;
-                optionElement.textContent = option;
-                calculationOptionSelect.appendChild(optionElement);
-            });
-        }
-    });
-
     // Calculate button handler
     calculateBtn.addEventListener('click', function() {
         const itemName = itemSelect.value;
         const amount = parseInt(amountInput.value) || 1;
-        const option = calculationOptionSelect.value || null;
 
         if (!itemName) {
             alert('Please select an item');
@@ -626,18 +662,18 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear cache
         priceCache = {};
 
-        // Calculate cost (no breakdown needed)
-        const totalCost = calculateItemCost(itemName, amount, ROYAL_JELLY_PRICE, option);
-        const formula = formulas[itemName];
+        // Calculate cost
+        const totalCost = calculateItemCost(itemName, amount, ROYAL_JELLY_PRICE);
 
-        // Build materials list
+        // Get recursive materials breakdown
+        const materialsBreakdown = getMaterialsBreakdown(itemName, amount);
+
+        // Build materials HTML
         let materialsHtml = '';
-        if (formula && !option) {
-            materialsHtml = '<div class="materials-section"><h4>Required Materials:</h4><ul class="materials-list">';
-            formula.materials.forEach(material => {
-                materialsHtml += `<li>${material.amount * amount} ${material.name}${material.isItem || formulas[material.name] ? ' (craftable item)' : ''}</li>`;
-            });
-            materialsHtml += '</ul></div>';
+        if (materialsBreakdown.length > 0) {
+            materialsHtml = '<div class="materials-section"><h4>Required Materials:</h4>';
+            materialsHtml += renderMaterialsBreakdown(materialsBreakdown);
+            materialsHtml += '</div>';
         }
 
         // Display result
@@ -645,7 +681,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <h3>💰 ${itemName.charAt(0).toUpperCase() + itemName.slice(1)}</h3>
             <div class="calculation-info">
                 <p><strong>Amount:</strong> ${amount.toLocaleString()}</p>
-                ${option ? `<p><strong>Calculation Option:</strong> ${option}</p>` : ''}
             </div>
             ${materialsHtml}
             <div class="total-cost">
