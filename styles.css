@@ -554,7 +554,6 @@ header h1 {
     color: var(--primary-light);
 }
 
-/* Scrollbar styling */
 .cost-breakdown::-webkit-scrollbar {
     width: 10px;
 }
@@ -598,7 +597,6 @@ header h1 {
     }
 }
 
-/* Selection styles */
 ::selection {
     background: var(--primary);
     color: white;
@@ -609,7 +607,6 @@ header h1 {
     color: white;
 }
 
-/* Focus visible styles */
 *:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: 2px;
